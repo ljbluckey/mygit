@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd" >
+<configuration>
+
+	<!-- alias(별명) = type의 긴 클래스명에 대한 짧은 이름 설정
+	           SQL 매퍼에서  alias(별명)으로 설정   -->
+	<typeAliases>
+		<typeAlias type="com.increpas.team03.model.BoardVO"
+			alias="Board" />
+	</typeAliases>
+
+	<!-- 연결환경 구성 -->
+	<!-- default는 기본 실행 환경의 아이디 -->
+	<!-- <environments default="dev"> -->
+	<!-- <environment id="dev"> -->
+	<!-- 1. 트랜잭션 관리구성이 스프링 설정파일로 이동 -->
+	<!-- <transactionManager type="JDBC" /> -->
+	<!-- 2. 연결구성이 스프링 설정파일로 이동 -->
+	<!-- <dataSource type="POOLED"> <property name="driver" value="oracle.jdbc.OracleDriver" 
+		/> <property name="url" value="jdbc:oracle:thin:@127.0.0.1:1521:xe" /> <property 
+		name="username" value="system" /> <property name="password" value="oracle" 
+		/> </dataSource> -->
+
+	<!-- </environment> -->
+	<!-- </environments> -->
+	
+    <!--  jndi JDBC연결   
+        META-INF/context.xml 생성-->
+	<!-- <environments default="development">
+		<environment id="development">
+			<transactionManager type="JDBC" />
+			<dataSource type="JNDI">
+				<property name="data_source" value="java:comp/env/jdbc/SpringDB" />
+			</dataSource>
+		</environment>
+	</environments> -->
+	<!--  SQL 매퍼(매핑)파일 경로구성  -->
+	<!-- 3. SQL 매퍼(매핑)파일 경로구성 스프링 설정파일로 이동가능 -->
+	<!-- <property name="mapperLocations" value="classpath:sqlmap/*.xml" /> -->
+	
+<!-- 	<mappers>
+		<mapper resource="sqlmap/board-mapping.xml" />
+		<mapper resource="sqlmap/board-mapping2.xml" />
+		<mapper resource="sqlmap/board-mapping3.xml" />
+		<mapper resource="sqlmap/board-mapping4.xml" /> 
+	</mappers> -->
+
+
+
+</configuration>

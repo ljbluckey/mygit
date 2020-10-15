@@ -1,0 +1,85 @@
+1. SQL 실행
+2. 워크스페이스는 utf-8
+3. c:\images(업로드) 생성
+4. server.xml
+ <Context docBase="c:\images" path="/image" reloadable="true"/>
+
+DownloadController.java
+File file = new File("c:/images/" + filename);
+
+5. dbconn.properties
+----------------------------
+문제해결
+1. goal에 eclipse:eclipse 기입 -> run
+2. maven -> update project
+3. project-> clean
+4. C:\Users\T07-N\.m2\repository 삭제
+   교육용 repository 복사
+ ---------------------------
+ * 디비
+ 관리대상(도메인모델=tblBoard 테이블 ) 게시글 ,게시파일
+ 관리대상의 컬럼(정보) 
+ * 자바!
+ 관리대상(도메인모델=VO 빈클래스)  BoardVO (
+ 하나의 빈클래스 Board로 VO,DTO로 활용 : board,tbl_board,board_tbl->클래스명=테이블명 )
+ 관리대상의 속성변수(정보) 
+ 
+ ----------------------------
+ 구현 작업(업무)
+ 작업의 CRUD
+ 모든글 조회 목록으로 출력 (기능)
+ 1. mybatis.xml 설정 후 SQL을 마이바티스의 SQLMapper xml파일에 작성
+ <SQL태그 id> 
+ select * from tblBoard 
+  </SQL태그> 
+  2. SQL태그 id 실행 DAO
+  2.1 SqlSessionTemplate을 스프링에서 주입
+  2.2 sqlSessionTemplate.selectList("mapper의namespace.SQL태그 id");
+  2.3 SQL실행시킨 결과집합과 VO 매핑 설정 
+   <!--  속성명과 컬럼명 일치하는 경우 컬럼명 생략 가능
+         순서를 컬럼순서대로 함 O(자바객체)R(결과집합의 행)매핑         
+         더우기 <resultMap>자체 생략 가능 -->
+ 3.  root-context.xml
+ root-context.xml (servlet-context.xml,servlet-context2.xml의 공통설정 주로 DB)                          
+   +------- servlet-context.xml(VC 설정)
+   +-------servlet-context2.xml(VC 설정)
+ 
+ -------------------------------------------
+ AC 
+- 뷰컨트롤러
+service와 비연동 뷰페이지만 리턴
+ - 요청메소드 
+ - <mvc:view-controller path="요청URL" view-name="뷰URL"/> 
+ 
+ - 페이지컨트롤러 : service와 연동하여 뷰페이지 리턴
+ 
+ ---------------------------
+ 글쓰기 
+ list.jsp -(button)->BoardInsertActionCommandController- (get) ->폼 insert.jsp
+-(post submit ) - (BoardVO)->BoardInsertActionCommandController->BoardService
+->MybatisBoardDAO->board-mapping.xml-(sql)->DB
+  ---------------------------
+  리스트는 페이징처리(글들을 페이지로 분리)
+  상세보기는 목록이동시 이전 페이지를 유지 
+
+ -----------
+ <!-- 예로 "test"가 포함된 글제목으로 글like 검색  -->
+	<select id="searchBoard" parameterType="string"  resultMap="BoardResult" >
+	select *
+	from
+	where title like '%'||#{titlekeyword}||'%'
+	</select>
+ 
+ ----------------------
+ c:url 상대경로 board_detail.do에 컨텍스트 붙여서 절대경로로 표현-->
+<a href='<c:url value="/board_detail.do?seq=${boardVO.seq}"/>'>
+${boardVO.title} </a>
+Tomcat 브라우저 세션 유지를 위한 URL에 jsessionid이 포함되면
+
+해제
+<session-config>
+   <tracking-mode>COOKIE</tracking-mode>
+</session-config> 
+ 
+ 
+ 

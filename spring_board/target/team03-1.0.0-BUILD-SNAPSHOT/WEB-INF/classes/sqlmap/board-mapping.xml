@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="board_ns">
+    <!--  디폴트 설정 
+        네임스페이스에 <cache> 태그를 설정하고 
+        그 네임스페이스에 있는 쿼리들의 결과집합에 대해서 캐시처리        
+		mapper XML의 모든 select 결과 캐시
+		mapper XML의 insert, update, delete는 모두 캐시를 지움
+	-->
+    <!-- <cache/>  -->
+    
+     <!-- 
+    
+    DB에 60초(단위는 ms) 간격으로 DBIO가 발생 (설정된 캐시를 얼마 동안 유지할지 설정)
+    flushInterval="60000"
+    알고리즘 선택
+    	- FIFO 캐시 알고리즘  : 먼저 만들어진 캐시가 먼저 삭제
+    	- LRU  : 가장 오랫동안 사용하지 않은 캐시를 지우는 알고리즘. 기본값. (기본은 가장 오랫동안 사용하지 않은 캐시를 지우는 알고리즘(LRU)) 
+    size : 캐시에 저장할 객체의 수
+    readOnly :모든 사용자간의 전역적 공유 캐시 데이터를 읽기만 가능하게 설정, cache를 변경하지 않음(기본값)   캐시를 적용할 쿼리 속성에 useCache="true"를 추가
+     -->
+    <!-- 기본설정이므로 생략가능-->
+	<cache eviction="LRU" flushInterval="60000" size="1024"  readOnly="true" /> 
+    
+    <cache eviction="FIFO" flushInterval="60000" size="1024" readOnly="true"/> 
+    
+	<!--  필드속성(속성변수)과 컬럼명 일치하는 경우 컬럼명 생략 가능
+	        순서를 컬럼순서대로 함
+	        <resultMap id="BoardResult" type="VO클래스명"> 
+	        <result property="속성변수명" column="컬럼명"/>-->
+	        <!-- SQL실행시킨 결과집합(원테이블이 X)의 행개수만큼 BoardVO객체 생성후 
+	        모든 BoardVO객체를 자바의 List객체에 저장  -->
+	<resultMap id="BoardResult" type="Board">
+		<result property="seq" column="seq"/><!-- BoardVO의 seq컬럼값을 seq 속성변수에 저장 -->
+		<result property="title" column="title"/>
+		<result property="content" column="content"/>
+		<result property="writer" column="writer"/>
+		<result property="regdate" column="regdate"/>
+		<result property="hitcount" column="hitcount"/>
+		<result property="password" column="password"/>
+		<result property="bref" column="bref"/>
+		<result property="bstep" column="bstep"/>
+		<result property="blevel" column="blevel"/>
+		<result property="uploadPath" column="uploadpath"/>
+	</resultMap>
+	
+	<!-- 전체 글 조회시  최신의 글이 상위에 노출되도록
+	        부모글 및 부모글의 참조번호를 갖는 답글 1차 내림정렬하고 
+	        답글내의 순번 2차 오름정렬
+	       -->
+<!-- 	<select id="selectAllBoards" resultMap="BoardResult">
+		select * from tblBoard 
+		order by bref desc ,bstep asc
+	</select>  -->
+	
+	
+	<!-- 페이징 단위의 전체 조회
+		행 순번 rownum 으로 가져올 글 목록을 지정
+		==rn이 1번글부터 2번글 까지 가져오기 
+	    ==where rn between 1 and 2 
+	 -->
+	<select id="selectAllBoards" resultMap="BoardResult" 
+	parameterType="Map">
+		    select * from
+		    (
+		    	select seq,title, writer, regdate, hitcount, password, bref, bstep, blevel, uploadPath,
+		    	rownum rn 
+		    	from
+				(
+					select * 
+					from tblBoard 
+					order by bref desc, bstep asc
+				)
+			)
+			where rn between #{firstRow} and #{endRow}
+	</select> 
+	
+	
+	
+	<!-- 상세보기시, 조회수 증가 -->
+	<update id="updateHitCount" parameterType="string">
+		update tblBoard
+		set hitcount = hitcount+1
+		where seq=#{seq}
+	</update>
+	
+	
+	
+	
+	<!-- 임의의 글 조회(동적쿼리 사용)
+	1. <if test="조건">
+	조건이 true일때 조건절을 씀
+	2. <trim prefix="WHERE" prefixOverrides="and 혹은 or ">
+    내부에 조건절이 존재할 때 where 키워드를 포함
+    그렇지 않는 경우는 where 키워드를 쓰지 않음
+    그리고 where 다음 and 혹은 or 가 바로 올 경우 and, or 키워드를 삭제
+ -->
+	<select id="selectBySeqBoard" parameterType="Map" 
+	resultMap="BoardResult" useCache="true"  >
+		select * from tblBoard
+		<trim prefix="where" prefixOverrides="and">
+		<if test="seq !=null"> 
+		<!--  보더의 seq의 게터 혹은 맵객체의 seq 속성명 호출 일반적인 String ,int형등은 게터 못찾으면서 오류발생 -->
+		 seq=#{seq}   
+		</if>
+		<!--
+   			<if test='writer.equals("hong")'> 
+    		<if test='writer == "hong"'>  
+	  -->
+		</trim>
+	</select>
+	
+	<!-- 전체 글갯수 리턴 -->
+	<select id="selectCount" resultType="int">
+	    select count(*) from tblBoard
+	</select>
+	
+	
+	
+	<!-- 글 등록 추가(글번호 자동 생성) -->
+	<!-- parameterType : #{}에 전달할 인자의 자료형
+	       1.전달할 인자들을  VO에 담아서 전달 받음  -->
+	       <insert id="insertBoard" parameterType="Board" >
+	       <!-- <insert id="insertBoard" parameterType="map" >	 -->
+		<!-- <selectKey resultClass="java.lang.Integer" 
+			keyProperty="seq"> SELECT SEQ_BOARD.NEXTVAL FROM DUAL </selectKey> -->
+		 <!--  ? 가 #{속성변수명} 변경 -->
+		 <!-- SEQ_BOARD.currval : 현재 시퀀스 번호 = 현재 글(부모글) 번호 -->
+		insert into
+			tblBoard(seq,title,content,writer,regdate,hitcount,password ,bref,UPLOADPATH) 
+		values(
+			SEQ_BOARD.NEXTVAL, #{title}, #{content}, #{writer}, sysdate, #{hitcount}, #{password}, SEQ_BOARD.currval, #{uploadPath, jdbcType=VARCHAR}
+		)		 
+		 
+		<!-- 트랜잭션 테스트를 위해서 임시로 주석처리
+		insert into
+			tblBoard(seq,title,content,writer,regdate,hitcount,password ,bref,UPLOADPATH) 
+		values(
+			#{seq}, #{title}, #{content}, #{writer}, sysdate, #{hitcount}, #{password}, #{seq}, #{uploadPath}
+		)
+		-->
+	</insert>
+	
+	
+	<!-- 글제목, 글내용 수정 -->
+	<update id="updateBoard" parameterType="Board">
+	update tblBoard set
+	title=#{title} ,content=#{content} where seq=#{seq}
+	</update>
+	
+	
+	
+	<!-- 글삭제 -->
+	<!-- <delete id="deleteBoard" parameterType="int">
+		delete from tblBoard
+		where  seq=#{seq}			
+	</delete> -->
+	
+	<!--들여쓰기가 0이면 원글이고
+	      답글도 함께 삭제하기위해 삭제조건을
+	      같은 부모의 참조번호를 가지는 답글들도 삭제
+	      아니면 답글로 판단하여 그 답글만 삭제
+	      (<choose> <when> 동적쿼리 사용) -->
+	<delete id="deleteBoard" parameterType="Board">
+		delete from tblBoard
+		where  
+		<choose>
+			<when test="blevel==0"><!-- 원글(최상위글,부모글) 이면 -->
+				bref=#{seq} <!-- 부모글을 공유하는 자식답글들 모두를 함께 삭제 -->
+			</when>
+			<otherwise><!-- 답글인 경우 그 답글만 삭제-->
+				seq=#{seq}
+			</otherwise>
+		</choose> 
+		
+	</delete>
+	<!-- 답글 추가  -->
+	<!-- 1. 답글은 부모원글의 순번 +1,  부모원글의 들여쓰기 수준 +1
+	         0 원글순번(seq=2  bref=2 ,bstep= 0,blevel=0)
+	         +-1 새답글 순번 (seq=3,bref=2  bstep= 1,blevel=1)
+	-->
+	<insert id="insertReplyBoard" parameterType="Board">
+		insert into
+		tblBoard(seq,title,content,writer,regdate,hitcount
+		,password ,bref,bstep,blevel,UPLOADPATH) values(SEQ_BOARD.NEXTVAL,#{title},#{content},#{writer},sysdate
+		,#{hitcount},#{password},#{bref},#{bstep}+1,#{blevel}+1,#{uploadPath, jdbcType=VARCHAR})
+	</insert>	
+	<!--  2. 같은 참조번호 글그룹이면서 원글(부모글)순번보다 큰 순번을 가지는
+	         기존의 답글(자식글)의 순번이 1증가  
+	         0 원글순번
+	         +-1 기존답글 순번
+	         
+	         0 원글순번
+	         +-1 최신 새답글 순번	
+	         +-2 기존답글 순번	         
+	         -->
+	<update id="replyUpdateBoard" parameterType="Board">
+		update  tblBoard  set bstep= bstep+1 
+		where bref=#{bref} and bstep > #{bstep}
+	</update>
+	
+	
+</mapper>
