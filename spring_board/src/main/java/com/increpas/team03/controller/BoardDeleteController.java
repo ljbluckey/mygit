@@ -14,6 +14,7 @@ public class BoardDeleteController {
 
 	// 답글 삭제, 원글삭제시 답글들도 함께 삭제
 	//aaaaaaaaaaaaabbbbbbbbbbbcccccdddddddddddddddeeeeeeeggggg
+	//222222222
 	@RequestMapping("/board/board_delete.do")
 	public String handleRequest(String seq, String blevel) {
 
