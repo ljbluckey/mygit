@@ -17,7 +17,7 @@ public class BoardDeleteController {
 
 	//1111111111111
 	//222222222
-
+   
 	@RequestMapping("/board/board_delete.do")
 	public String handleRequest(String seq, String blevel) {
 
