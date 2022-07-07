@@ -127,7 +127,7 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-validator</artifactId>
-			<version>4.3.1.Final</version>
+			<version>6.0.23.Final</version>
 		</dependency>
 
 		<!-- import javax.validation.Valid 하기 위한 라이브러리 -->
